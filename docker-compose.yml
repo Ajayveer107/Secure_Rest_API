@@ -1,0 +1,18 @@
+services:
+  db:
+    image: postgres:16
+    environment: {POSTGRES_USER: app, POSTGRES_PASSWORD: app, POSTGRES_DB: notes}
+    volumes: [pgdata:/var/lib/postgresql/data]
+    healthcheck: {test: ["CMD-SHELL", "pg_isready -U app"], interval: 3s, retries: 10}
+  redis:
+    image: redis:7
+  api:
+    build: .
+    ports: ["8000:8000"]
+    environment:
+      DATABASE_URL: postgresql+psycopg2://app:app@db:5432/notes
+      REDIS_URL: redis://redis:6379/0
+      SECRET_KEY: change-me-in-real-deployments
+      ADMIN_EMAIL: you@example.com
+    depends_on: {db: {condition: service_healthy}, redis: {condition: service_started}}
+volumes: {pgdata: {}}
